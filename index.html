@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incidence Matrices: From Fibonacci to Graph Topology</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,700;9..144,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+:root {
+  --bg: #faf8f3;
+  --bg-warm: #f4f0e8;
+  --bg-card: #fff;
+  --text: #2c2417;
+  --text-mid: #5c4f3a;
+  --text-muted: #9a8d78;
+  --heading: #1a1208;
+  --accent: #b44a1e;
+  --accent-dim: rgba(180, 74, 30, 0.1);
+  --accent2: #1a6b4a;
+  --accent2-dim: rgba(26, 107, 74, 0.1);
+  --accent3: #3b5998;
+  --accent3-dim: rgba(59, 89, 152, 0.1);
+  --gold: #c4940a;
+  --gold-dim: rgba(196, 148, 10, 0.08);
+  --border: rgba(44, 36, 23, 0.1);
+  --border-strong: rgba(44, 36, 23, 0.2);
+  --font-body: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 19px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent-dim); color: var(--accent); }
+
+.container { max-width: 780px; margin: 0 auto; padding: 0 28px; }
+
+/* --- Header --- */
+header {
+  padding: 72px 0 40px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+header h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--heading);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+header .deck {
+  font-size: 1.05rem;
+  color: var(--text-mid);
+  margin-top: 16px;
+  max-width: 520px;
+  margin-left: auto; margin-right: auto;
+  font-style: italic;
+}
+header .byline {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* --- Sections --- */
+section {
+  padding: 48px 0 32px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+section.visible { opacity: 1; transform: translateY(0); }
+
+h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.55rem;
+  color: var(--heading);
+  margin-bottom: 14px;
+}
+h2 .num {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.55em;
+  color: var(--accent);
+  margin-right: 6px;
+  vertical-align: 2px;
+}
+
+h3 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1.12rem;
+  color: var(--heading);
+  margin: 24px 0 8px;
+}
+
+p { margin-bottom: 14px; }
+strong { font-weight: 700; color: var(--heading); }
+
+.math-block {
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin: 18px 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.aside {
+  border-left: 3px solid var(--gold);
+  background: var(--gold-dim);
+  padding: 12px 16px;
+  margin: 18px 0;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.95rem;
+  color: var(--text-mid);
+}
+.aside.green { border-left-color: var(--accent2); background: var(--accent2-dim); }
+.aside.blue { border-left-color: var(--accent3); background: var(--accent3-dim); }
+.aside.red { border-left-color: var(--accent); background: var(--accent-dim); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.84em;
+  background: var(--bg-warm);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+/* --- Canvas panels --- */
+.canvas-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  margin: 22px 0;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(44,36,23,0.04);
+}
+.canvas-panel .panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+.canvas-panel canvas { display: block; width: 100%; }
+.controls {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+}
+.controls button {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  padding: 5px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.controls button:hover { background: var(--bg-warm); border-color: var(--accent); color: var(--accent); }
+.controls button.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.status-line {
+  padding: 6px 16px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  min-height: 30px;
+}
+
+/* --- Separator --- */
+.sep {
+  width: 60px;
+  height: 1px;
+  background: var(--border-strong);
+  margin: 8px auto;
+}
+
+/* --- Invariant cards --- */
+.inv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 20px 0;
+}
+@media (max-width: 560px) { .inv-grid { grid-template-columns: 1fr; } }
+.inv-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 6px rgba(44,36,23,0.04);
+}
+.inv-card h4 {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--accent);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.inv-card p {
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  line-height: 1.55;
+}
+.inv-card .formula {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  background: var(--bg-warm);
+  padding: 4px 8px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* --- Footer --- */
+footer {
+  text-align: center;
+  padding: 40px 0 56px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .container { padding: 0 16px; }
+  header { padding: 40px 0 24px; }
+  section { padding: 32px 0 20px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Incidence Matrices</h1>
+    <p class="deck">From the Fibonacci matrix to graph topology: how a table of 0s and 1s encodes every cycle, every tree, and every boundary in a network.</p>
+    <p class="byline">A prerequisite for quantum error correction</p>
+  </div>
+</header>
+
+<main class="container">
+
+<!-- ======= SECTION 1: WHY MATRICES? ======= -->
+<section id="sec-fib">
+<h2><span class="num">01</span> Why Matrices? The Fibonacci Example</h2>
+
+<p>The Fibonacci sequence \(0, 1, 1, 2, 3, 5, 8, 13, \ldots\) is defined by the recurrence \(F_{n+1} = F_n + F_{n-1}\). This is a rule that takes two numbers and produces the next. We can write it as a matrix multiplication:</p>
+
+<div class="math-block">
+$$\begin{pmatrix} F_{n+1} \\ F_n \end{pmatrix} = \begin{pmatrix} 1 & 1 \\ 1 & 0 \end{pmatrix} \begin{pmatrix} F_n \\ F_{n-1} \end{pmatrix}$$
+</div>
+
+<p>Call this the <strong>Fibonacci matrix</strong> \(Q\). Repeated application gives \(Q^n\) acting on the initial state. The matrix packages two things at once: the rule (top row: add the two inputs) and the memory (bottom row: pass the first input through unchanged).</p>
+
+<div class="canvas-panel">
+  <div class="panel-head"><span>Fibonacci Matrix Powers</span><span>Q<sup>n</sup></span></div>
+  <canvas id="cvFib" height="320"></canvas>
+  <div class="controls">
+    <button class="fib-btn active" data-n="1">n = 1</button>
+    <button class="fib-btn" data-n="2">n = 2</button>
+    <button class="fib-btn" data-n="3">n = 3</button>
+    <button class="fib-btn" data-n="5">n = 5</button>
+    <button class="fib-btn" data-n="8">n = 8</button>
+    <button class="fib-btn" data-n="12">n = 12</button>
+  </div>
+  <div class="status-line" id="fibStatus">Q¹ = [[1,1],[1,0]]. det(Q) = −1.</div>
+</div>
+
+<h3>The determinant as an invariant</h3>
+
+<p>The determinant of \(Q\) is \(1 \cdot 0 - 1 \cdot 1 = -1\). Since the determinant is multiplicative, \(\det(Q^n) = (-1)^n\). Written out, this says:</p>
+
+<div class="math-block">
+$$F_{n+1}\, F_{n-1} \;-\; F_n^2 \;=\; (-1)^n$$
+</div>
+
+<p>This is <strong>Cassini's identity</strong>. The determinant tells you that adjacent Fibonacci numbers are always coprime (their greatest common divisor is 1), because the identity shows a linear combination equalling \(\pm 1\).</p>
+
+<div class="aside">
+<strong>The lesson.</strong> A matrix is not just a grid of numbers. It encodes a transformation, and its determinant is a conserved quantity under that transformation. The Fibonacci matrix preserves (signed) area. We now ask: what transformation does a graph encode?
+</div>
+</section>
+
+<!-- ======= SECTION 2: ADJACENCY ======= -->
+<section id="sec-adj">
+<h2><span class="num">02</span> Graphs and the Adjacency Matrix</h2>
+
+<p>A <strong>graph</strong> is a set of vertices (nodes) connected by edges. The simplest matrix encoding is the <strong>adjacency matrix</strong> \(A\): an \(n \times n\) matrix where \(A_{ij} = 1\) if vertex \(i\) is connected to vertex \(j\), and \(0\) otherwise. For an undirected graph, \(A\) is symmetric.</p>
+
+<div class="canvas-panel">
+  <div class="panel-head"><span>Graph ↔ Adjacency Matrix</span><span>Click vertices to toggle edges</span></div>
+  <canvas id="cvAdj" height="380"></canvas>
+  <div class="controls">
+    <button id="btnAdjTriangle" class="active">Triangle</button>
+    <button id="btnAdjSquare">Square</button>
+    <button id="btnAdjK4">Complete K₄</button>
+    <button id="btnAdjPath">Path</button>
+  </div>
+  <div class="status-line" id="adjStatus">Triangle: 3 vertices, 3 edges.</div>
+</div>
+
+<p>The adjacency matrix tells you which vertices are neighbours. Its powers count walks: \((A^k)_{ij}\) is the number of walks of length \(k\) from vertex \(i\) to vertex \(j\). But it conflates two different objects (vertices and edges) into one matrix. To separate them, we need a different matrix.</p>
+</section>
+
+<!-- ======= SECTION 3: INCIDENCE ======= -->
+<section id="sec-incidence">
+<h2><span class="num">03</span> The Incidence Matrix</h2>
+
+<p>The <strong>incidence matrix</strong> \(B\) is a rectangular matrix with one row per vertex and one column per edge. Entry \(B_{v,e} = 1\) if vertex \(v\) is an endpoint of edge \(e\), and \(0\) otherwise.</p>
+
+<div class="math-block">
+$$B \;\in\; \{0,1\}^{|V| \times |E|}, \qquad B_{v,e} = \begin{cases} 1 & \text{if } v \in \partial e \\ 0 & \text{otherwise} \end{cases}$$
+</div>
+
+<p>This matrix is honest about what a graph actually <em>is</em>: a relationship between two different kinds of object (vertices and edges). Each column has exactly two 1s, because every edge has exactly two endpoints. Each row has as many 1s as the degree of that vertex.</p>
+
+<div class="canvas-panel">
+  <div class="panel-head"><span>Incidence Matrix Builder</span><span id="incInfo">Select a graph</span></div>
+  <canvas id="cvInc" height="440"></canvas>
+  <div class="controls">
+    <button id="btnIncTriangle" class="active">Triangle</button>
+    <button id="btnIncSquare">Square</button>
+    <button id="btnIncK4">K₄</button>
+    <button id="btnIncHouse">House</button>
+  </div>
+  <div class="status-line" id="incStatus">Each column has exactly two 1s. Each row count = vertex degree.</div>
+</div>
+
+<h3>Recovering adjacency from incidence</h3>
+
+<p>The adjacency and incidence matrices are related. Over the real numbers:</p>
+
+<div class="math-block">
+$$B\, B^\top = D + A$$
+</div>
+
+<p>where \(D\) is the diagonal degree matrix. The combination \(L = D - A = B\, B^\top - 2A\) is the <strong>graph Laplacian</strong>, fundamental to spectral graph theory, diffusion, and network analysis.</p>
+</section>
+
+<!-- ======= SECTION 4: KERNEL = CYCLES ======= -->
+<section id="sec-kernel">
+<h2><span class="num">04</span> The Kernel: Where Cycles Live</h2>
+
+<p>Now the key insight. Think of a vector \(\mathbf{c} \in \{0,1\}^{|E|}\) as a selection of edges (1 = selected, 0 = not). Apply the incidence matrix over \(\mathbb{F}_2\) (arithmetic mod 2):</p>
+
+<div class="math-block">
+$$B\, \mathbf{c} = \mathbf{0} \quad (\text{mod } 2) \qquad \Longleftrightarrow \qquad \mathbf{c} \text{ is a cycle}$$
+</div>
+
+<p>Why? The product \(B \mathbf{c}\) gives, at each vertex, the number of selected edges incident to that vertex, reduced mod 2. This is zero at every vertex precisely when every vertex in the subgraph has <strong>even degree</strong>. A subgraph where every vertex has even degree is a union of cycles.</p>
+
+<div class="canvas-panel">
+  <div class="panel-head"><span>Cycle Detector</span><span>Toggle edges, check if the selection is a cycle</span></div>
+  <canvas id="cvCycle" height="420"></canvas>
+  <div class="controls">
+    <button id="btnCycleReset">Reset</button>
+    <button id="btnCycleShowTriangle">Show: triangle cycle</button>
+    <button id="btnCycleShowSquare">Show: outer square</button>
+    <button id="btnCycleShowNon">Show: non-cycle</button>
+  </div>
+  <div class="status-line" id="cycleStatus">Click edges to select them. The boundary Bc (mod 2) is shown at each vertex.</div>
+</div>
+
+<p>The set of all cycles forms a vector space over \(\mathbb{F}_2\): if \(\mathbf{c}_1\) and \(\mathbf{c}_2\) are cycles, so is their symmetric difference \(\mathbf{c}_1 + \mathbf{c}_2\) (mod 2). The dimension of this <strong>cycle space</strong> is:</p>
+
+<div class="math-block">
+$$\dim \ker(B) = |E| - |V| + k$$
+</div>
+
+<p>where \(k\) is the number of connected components. For a connected graph, this is \(|E| - |V| + 1\). Every independent cycle corresponds to one "extra" edge beyond what a spanning tree needs.</p>
+
+<div class="aside green">
+<strong>The Matrix-Tree theorem.</strong> Delete any one row from \(B\), forming the reduced incidence matrix \(\tilde{B}\). Then \(\det(\tilde{B}\tilde{B}^\top)\) equals the number of spanning trees of the graph. For the triangle: \(\det = 3\) (three spanning trees). For \(K_4\): \(\det = 16\). The determinant counts trees, just as the Fibonacci determinant counted... well, \(\pm 1\). Both are topological invariants extracted from matrix algebra.
+</div>
+</section>
+
+<!-- ======= SECTION 5: BOUNDARY OPERATOR ======= -->
+<section id="sec-boundary">
+<h2><span class="num">05</span> The Boundary Operator and \(\partial^2 = 0\)</h2>
+
+<p>Rename the incidence matrix: call it \(\partial_1\) (the boundary operator on 1-chains). A "1-chain" is a formal sum of edges. The boundary operator maps each edge to the sum of its two endpoints. Over \(\mathbb{F}_2\), "sum" means XOR.</p>
+
+<p>If the graph is the 1-skeleton of a surface (a mesh of faces), there is a second operator \(\partial_2\) mapping each face to its boundary edges. The composition satisfies:</p>
+
+<div class="math-block">
+$$\partial_1 \circ \partial_2 = 0$$
+</div>
+
+<p>In matrix language, \(B \cdot \partial_2 = 0\) mod 2. This is because every face boundary is a cycle, and cycles are in the kernel of \(\partial_1\) by definition.</p>
+
+<div class="canvas-panel">
+  <div class="panel-head"><span>Chain Complex Visualiser</span><span>faces → edges → vertices</span></div>
+  <canvas id="cvBoundary" height="420"></canvas>
+  <div class="controls">
+    <button id="btnBndFace" class="active">Select a face</button>
+    <button id="btnBndEdge">Select edges manually</button>
+    <button id="btnBndClear">Clear</button>
+  </div>
+  <div class="status-line" id="bndStatus">Click a face. Its boundary edges light up. Apply ∂₁ to see the vertex boundary vanish.</div>
+</div>
+
+<div class="aside blue">
+<strong>Why this matters for quantum error correction.</strong> In the surface code, data qubits live on edges, Z-stabilisers are face boundaries (\(\text{im}(\partial_2)\)), and X-stabilisers live on the dual lattice. The condition that stabilisers commute is \(\partial^2 = 0\). The logical operators are cycles that are not boundaries: the homology group \(H_1 = \ker(\partial_1) / \text{im}(\partial_2)\). The entire error correction scheme is the linear algebra of the incidence matrix over \(\mathbb{F}_2\).
+</div>
+
+<h3>Summary of the chain</h3>
+
+<p>The conceptual path we have followed:</p>
+
+<div class="math-block" style="text-align: left; font-size: 0.92rem; line-height: 2;">
+<strong>Fibonacci matrix</strong> → a matrix encodes a rule; its determinant is an invariant<br>
+<strong>Adjacency matrix</strong> → encodes vertex-vertex connectivity, but conflates vertices and edges<br>
+<strong>Incidence matrix</strong> → honestly separates vertices and edges; each column has exactly two 1s<br>
+<strong>Kernel over \(\mathbb{F}_2\)</strong> → cycles are edge-sets with vanishing boundary<br>
+<strong>Boundary operator</strong> → \(\partial_1\) on a mesh; face boundaries are automatically cycles (\(\partial^2 = 0\))<br>
+<strong>Homology</strong> → cycles that are not boundaries = topological information = logical qubits
+</div>
+
+</section>
+
+<div class="sep"></div>
+
+<footer>
+  <p>Incidence Matrices &middot; From Fibonacci to Graph Topology</p>
+  <p style="margin-top:8px;">
+    Next: <a href="spectral-invariants.html">Spectral Invariants &amp; the Characteristic Polynomial</a>
+    &middot; <a href="kirchhoff-squared-rectangles.html">Kirchhoff Circuits &amp; Squared Rectangles</a>
+  </p>
+  <p style="margin-top:4px;">See also: <a href="quantum-error-correction.html">Quantum Error Correction: The Surface Code</a></p>
+</footer>
+
+</main>
+
+<script>
+// ============================================================
+//  UTILITIES
+// ============================================================
+const dpr = window.devicePixelRatio || 1;
+function setupCanvas(id) {
+  const c = document.getElementById(id);
+  const rect = c.getBoundingClientRect();
+  c.width = rect.width * dpr;
+  c.height = rect.height * dpr;
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { c, ctx, w: rect.width, h: rect.height };
+}
+
+const COL = {
+  accent: '#b44a1e', accentDim: 'rgba(180,74,30,0.12)',
+  green: '#1a6b4a', greenDim: 'rgba(26,107,74,0.12)',
+  blue: '#3b5998', blueDim: 'rgba(59,89,152,0.15)',
+  gold: '#c4940a',
+  text: '#2c2417', textMid: '#5c4f3a', textMuted: '#9a8d78',
+  border: 'rgba(44,36,23,0.15)', bg: '#faf8f3', bgWarm: '#f4f0e8',
+  one: '#b44a1e', zero: 'rgba(44,36,23,0.12)',
+  node: '#2c2417', nodeHL: '#1a6b4a', edge: 'rgba(44,36,23,0.3)', edgeHL: '#b44a1e',
+};
+
+// ============================================================
+//  PANEL 1: FIBONACCI MATRIX
+// ============================================================
+(function(){
+  let {c, ctx, w, h} = setupCanvas('cvFib');
+  let n = 1;
+
+  // compute Q^n via repeated multiplication
+  function matMul(A, B) {
+    return [
+      [A[0][0]*B[0][0]+A[0][1]*B[1][0], A[0][0]*B[0][1]+A[0][1]*B[1][1]],
+      [A[1][0]*B[0][0]+A[1][1]*B[1][0], A[1][0]*B[0][1]+A[1][1]*B[1][1]]
+    ];
+  }
+  function matPow(M, p) {
+    let R = [[1,0],[0,1]];
+    let base = M.map(r => [...r]);
+    while (p > 0) {
+      if (p & 1) R = matMul(R, base);
+      base = matMul(base, base);
+      p >>= 1;
+    }
+    return R;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const Q = [[1,1],[1,0]];
+    const Qn = matPow(Q, n);
+    const det = Qn[0][0]*Qn[1][1] - Qn[0][1]*Qn[1][0];
+
+    const cx = w / 2, cy = h / 2;
+    const cellSize = Math.min(w * 0.14, 80);
+    const gap = 4;
+    const matW = cellSize * 2 + gap;
+    const matH = cellSize * 2 + gap;
+    const mx = cx - matW / 2, my = cy - matH / 2 - 10;
+
+    // bracket lines
+    ctx.strokeStyle = COL.text;
+    ctx.lineWidth = 2;
+    const bpad = 8;
+    // left bracket
+    ctx.beginPath();
+    ctx.moveTo(mx - bpad + 6, my - bpad);
+    ctx.lineTo(mx - bpad, my - bpad);
+    ctx.lineTo(mx - bpad, my + matH + bpad);
+    ctx.lineTo(mx - bpad + 6, my + matH + bpad);
+    ctx.stroke();
+    // right bracket
+    ctx.beginPath();
+    ctx.moveTo(mx + matW + bpad - 6, my - bpad);
+    ctx.lineTo(mx + matW + bpad, my - bpad);
+    ctx.lineTo(mx + matW + bpad, my + matH + bpad);
+    ctx.lineTo(mx + matW + bpad - 6, my + matH + bpad);
+    ctx.stroke();
+
+    // cells
+    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+      const x = mx + j * (cellSize + gap);
+      const y = my + i * (cellSize + gap);
+      const val = Qn[i][j];
+
+      ctx.fillStyle = val > 0 ? COL.accentDim : COL.bgWarm;
+      ctx.beginPath();
+      ctx.roundRect(x, y, cellSize, cellSize, 4);
+      ctx.fill();
+
+      ctx.fillStyle = val > 0 ? COL.accent : COL.textMuted;
+      ctx.font = `600 ${Math.min(cellSize * 0.4, 28)}px "IBM Plex Mono"`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(val.toLocaleString(), x + cellSize/2, y + cellSize/2);
+    }
+
+    // label
+    ctx.fillStyle = COL.textMid;
+    ctx.font = '15px "IBM Plex Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Q${superscript(n)}`, cx, my - 24);
+
+    // det
+    ctx.fillStyle = det > 0 ? COL.green : COL.accent;
+    ctx.font = '500 13px "IBM Plex Mono"';
+    ctx.fillText(`det = ${det}`, cx, my + matH + 32);
+
+    // Fibonacci sequence note
+    ctx.fillStyle = COL.textMuted;
+    ctx.font = '12px "IBM Plex Mono"';
+    ctx.fillText(`F${subscript(n+1)} = ${Qn[0][0]}    F${subscript(n)} = ${Qn[0][1]}    F${subscript(n-1)} = ${Qn[1][1]}`, cx, my + matH + 54);
+
+    // Cassini
+    const fn1 = Qn[0][0], fn = Qn[0][1], fn_1 = Qn[1][1];
+    ctx.fillStyle = COL.gold;
+    ctx.font = '12px "IBM Plex Mono"';
+    ctx.fillText(`Cassini: ${fn1}×${fn_1} − ${fn}² = ${fn1*fn_1 - fn*fn}`, cx, my + matH + 74);
+
+    document.getElementById('fibStatus').textContent =
+      `Q${superscript(n)}: entries are Fibonacci numbers. det(Q${superscript(n)}) = (−1)${superscript(n)} = ${det}. Cassini's identity.`;
+  }
+
+  function superscript(n) { return String(n).replace(/./g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'[c] || c); }
+  function subscript(n) { return String(n).replace(/./g, c => '₀₁₂₃₄₅₆₇₈₉'[c] || c); }
+
+  document.querySelectorAll('.fib-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.fib-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      n = parseInt(this.dataset.n);
+      draw();
+    });
+  });
+
+  draw();
+  window.addEventListener('resize', () => { ({c,ctx,w,h} = setupCanvas('cvFib')); draw(); });
+})();
+
+// ============================================================
+//  GRAPH PRESETS
+// ============================================================
+const GRAPHS = {
+  triangle: {
+    verts: [[0.5, 0.05], [0.15, 0.85], [0.85, 0.85]],
+    edges: [[0,1],[1,2],[0,2]],
+    labels: ['A','B','C']
+  },
+  square: {
+    verts: [[0.2, 0.2], [0.8, 0.2], [0.8, 0.8], [0.2, 0.8]],
+    edges: [[0,1],[1,2],[2,3],[0,3]],
+    labels: ['A','B','C','D']
+  },
+  k4: {
+    verts: [[0.5, 0.08], [0.1, 0.65], [0.9, 0.65], [0.5, 0.92]],
+    edges: [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],
+    labels: ['A','B','C','D']
+  },
+  path: {
+    verts: [[0.1, 0.5], [0.37, 0.5], [0.63, 0.5], [0.9, 0.5]],
+    edges: [[0,1],[1,2],[2,3]],
+    labels: ['A','B','C','D']
+  },
+  house: {
+    verts: [[0.5, 0.08], [0.15, 0.45], [0.85, 0.45], [0.85, 0.9], [0.15, 0.9]],
+    edges: [[0,1],[0,2],[1,2],[1,4],[2,3],[3,4]],
+    labels: ['A','B','C','D','E']
+  }
+};
+
+function drawGraph(ctx, g, w, h, region, opts = {}) {
+  const {selectedEdges = new Set(), showBoundary = false, boundaryVals = []} = opts;
+  const {x: rx, y: ry, w: rw, h: rh} = region;
+
+  // edges
+  for (let ei = 0; ei < g.edges.length; ei++) {
+    const [a, b] = g.edges[ei];
+    const x1 = rx + g.verts[a][0] * rw, y1 = ry + g.verts[a][1] * rh;
+    const x2 = rx + g.verts[b][0] * rw, y2 = ry + g.verts[b][1] * rh;
+    const sel = selectedEdges.has(ei);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = sel ? COL.edgeHL : COL.edge;
+    ctx.lineWidth = sel ? 3.5 : 1.5;
+    ctx.stroke();
+    // edge label
+    const mx = (x1+x2)/2, my2 = (y1+y2)/2;
+    const dx = x2-x1, dy = y2-y1;
+    const nx = -dy, ny = dx;
+    const nl = Math.hypot(nx, ny) || 1;
+    ctx.fillStyle = sel ? COL.accent : COL.textMuted;
+    ctx.font = `500 ${sel ? 11 : 10}px "IBM Plex Mono"`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`e${ei}`, mx + nx/nl*14, my2 + ny/nl*14);
+  }
+
+  // vertices
+  for (let vi = 0; vi < g.verts.length; vi++) {
+    const x = rx + g.verts[vi][0] * rw, y = ry + g.verts[vi][1] * rh;
+    const hasBnd = showBoundary && boundaryVals[vi] !== undefined;
+    const bval = hasBnd ? boundaryVals[vi] : 0;
+
+    ctx.beginPath(); ctx.arc(x, y, hasBnd ? 14 : 10, 0, Math.PI * 2);
+    if (hasBnd) {
+      ctx.fillStyle = bval === 0 ? COL.greenDim : COL.accentDim;
+      ctx.fill();
+      ctx.strokeStyle = bval === 0 ? COL.green : COL.accent;
+      ctx.lineWidth = 2; ctx.stroke();
+    } else {
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = COL.text;
+      ctx.lineWidth = 1.5; ctx.stroke();
+    }
+
+    ctx.fillStyle = hasBnd ? (bval === 0 ? COL.green : COL.accent) : COL.text;
+    ctx.font = `600 ${hasBnd ? 12 : 11}px "IBM Plex Mono"`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(hasBnd ? String(bval) : g.labels[vi], x, y);
+  }
+}
+
+function drawMatrix(ctx, mat, rowLabels, colLabels, region, opts = {}) {
+  const {highlightCols = new Set(), title = ''} = opts;
+  const {x: rx, y: ry, w: rw, h: rh} = region;
+  const nR = mat.length, nC = mat[0].length;
+  const pad = {top: 36, left: 40, right: 8, bottom: 8};
+  const cellW = Math.min(Math.floor((rw - pad.left - pad.right) / nC), 36);
+  const cellH = Math.min(Math.floor((rh - pad.top - pad.bottom) / nR), 28);
+  const startX = rx + pad.left + ((rw - pad.left - pad.right) - cellW * nC) / 2;
+  const startY = ry + pad.top;
+
+  // title
+  if (title) {
+    ctx.fillStyle = COL.textMid;
+    ctx.font = '500 11px "IBM Plex Mono"';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, rx + rw/2, ry + 14);
+  }
+
+  // col headers
+  ctx.font = `500 ${Math.min(cellW*0.45, 10)}px "IBM Plex Mono"`;
+  ctx.fillStyle = COL.textMuted;
+  ctx.textAlign = 'center';
+  for (let j = 0; j < nC; j++) {
+    ctx.save();
+    ctx.translate(startX + j*cellW + cellW/2, startY - 6);
+    ctx.rotate(-0.5);
+    ctx.fillText(colLabels[j], 0, 0);
+    ctx.restore();
+  }
+
+  // row headers
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.font = `500 ${Math.min(cellH*0.55, 10)}px "IBM Plex Mono"`;
+  for (let i = 0; i < nR; i++) {
+    ctx.fillStyle = COL.textMuted;
+    ctx.fillText(rowLabels[i], startX - 5, startY + i*cellH + cellH/2);
+  }
+
+  // cells
+  for (let i = 0; i < nR; i++) for (let j = 0; j < nC; j++) {
+    const x = startX + j * cellW, y = startY + i * cellH;
+    const val = mat[i][j];
+    const hl = highlightCols.has(j);
+    ctx.fillStyle = val === 1 ? (hl ? 'rgba(180,74,30,0.22)' : 'rgba(180,74,30,0.1)') : (hl ? 'rgba(180,74,30,0.04)' : 'rgba(0,0,0,0.015)');
+    ctx.fillRect(x, y, cellW - 1, cellH - 1);
+    ctx.fillStyle = val === 1 ? COL.accent : COL.zero;
+    ctx.font = `${val === 1 ? '600' : '400'} ${Math.min(cellH*0.55, 12)}px "IBM Plex Mono"`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(val), x + cellW/2, y + cellH/2);
+  }
+}
+
+function buildIncidenceMatrix(g) {
+  const nV = g.verts.length, nE = g.edges.length;
+  const B = Array.from({length: nV}, () => new Array(nE).fill(0));
+  for (let ei = 0; ei < nE; ei++) {
+    B[g.edges[ei][0]][ei] = 1;
+    B[g.edges[ei][1]][ei] = 1;
+  }
+  return B;
+}
+
+function buildAdjMatrix(g) {
+  const n = g.verts.length;
+  const A = Array.from({length: n}, () => new Array(n).fill(0));
+  for (const [a, b] of g.edges) { A[a][b] = 1; A[b][a] = 1; }
+  return A;
+}
+
+// ============================================================
+//  PANEL 2: ADJACENCY MATRIX
+// ============================================================
+(function(){
+  let {c, ctx, w, h} = setupCanvas('cvAdj');
+  let currentGraph = 'triangle';
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const g = GRAPHS[currentGraph];
+    const A = buildAdjMatrix(g);
+    const graphRegion = {x: 0, y: 0, w: w * 0.45, h: h};
+    const matRegion = {x: w * 0.48, y: 0, w: w * 0.52, h: h};
+    drawGraph(ctx, g, w, h, graphRegion);
+    drawMatrix(ctx, A, g.labels, g.labels, matRegion, {title: 'Adjacency matrix A'});
+    document.getElementById('adjStatus').textContent =
+      `${g.labels.length} vertices, ${g.edges.length} edges. A is symmetric. Diagonal = 0 (no self-loops).`;
+  }
+
+  ['Triangle','Square','K4','Path'].forEach(name => {
+    const key = name.toLowerCase();
+    document.getElementById('btnAdj' + name).addEventListener('click', function() {
+      document.querySelectorAll('#cvAdj ~ .controls button').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentGraph = key;
+      draw();
+    });
+  });
+
+  draw();
+  window.addEventListener('resize', () => { ({c,ctx,w,h} = setupCanvas('cvAdj')); draw(); });
+})();
+
+// ============================================================
+//  PANEL 3: INCIDENCE MATRIX
+// ============================================================
+(function(){
+  let {c, ctx, w, h} = setupCanvas('cvInc');
+  let currentGraph = 'triangle';
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const g = GRAPHS[currentGraph];
+    const B = buildIncidenceMatrix(g);
+    const colLabels = g.edges.map((_, i) => `e${i}`);
+    const graphRegion = {x: 0, y: 0, w: w * 0.4, h: h * 0.85};
+    const matRegion = {x: w * 0.42, y: 0, w: w * 0.58, h: h};
+    drawGraph(ctx, g, w, h, graphRegion);
+    drawMatrix(ctx, B, g.labels, colLabels, matRegion, {title: 'Incidence matrix B'});
+    document.getElementById('incStatus').textContent =
+      `${g.labels.length} vertices × ${g.edges.length} edges. Each column sums to 2. Row sum = vertex degree.`;
+  }
+
+  const mapping = {Triangle:'triangle', Square:'square', K4:'k4', House:'house'};
+  ['Triangle','Square','K4','House'].forEach(name => {
+    document.getElementById('btnInc' + name).addEventListener('click', function() {
+      document.querySelectorAll('#cvInc ~ .controls button').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentGraph = mapping[name];
+      draw();
+    });
+  });
+
+  draw();
+  window.addEventListener('resize', () => { ({c,ctx,w,h} = setupCanvas('cvInc')); draw(); });
+})();
+
+// ============================================================
+//  PANEL 4: CYCLE DETECTOR
+// ============================================================
+(function(){
+  let {c, ctx, w, h} = setupCanvas('cvCycle');
+  const g = GRAPHS.house; // use house graph (has cycles)
+  const B = buildIncidenceMatrix(g);
+  let selectedEdges = new Set();
+
+  function computeBoundary() {
+    const nV = g.verts.length;
+    const result = new Array(nV).fill(0);
+    for (const ei of selectedEdges) {
+      result[g.edges[ei][0]] = (result[g.edges[ei][0]] + 1) % 2;
+      result[g.edges[ei][1]] = (result[g.edges[ei][1]] + 1) % 2;
+    }
+    return result;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const bnd = computeBoundary();
+    const isCycle = selectedEdges.size > 0 && bnd.every(v => v === 0);
+    const graphRegion = {x: 0, y: 0, w: w * 0.45, h: h * 0.85};
+    const matRegion = {x: w * 0.47, y: 0, w: w * 0.53, h: h * 0.7};
+
+    drawGraph(ctx, g, w, h, graphRegion, {
+      selectedEdges,
+      showBoundary: selectedEdges.size > 0,
+      boundaryVals: bnd
+    });
+
+    // draw matrix with highlighted columns
+    const colLabels = g.edges.map((_, i) => `e${i}`);
+    drawMatrix(ctx, B, g.labels, colLabels, matRegion, {
+      title: 'B · c  (mod 2)',
+      highlightCols: selectedEdges
+    });
+
+    // result vector
+    const rvX = w * 0.47 + w * 0.53 / 2;
+    const rvY = h * 0.72;
+    ctx.fillStyle = isCycle ? COL.green : COL.accent;
+    ctx.font = `600 13px "IBM Plex Mono"`;
+    ctx.textAlign = 'center';
+    ctx.fillText(isCycle ? '✓ CYCLE (Bc = 0)' : 'NOT a cycle (Bc ≠ 0)', rvX, rvY);
+
+    ctx.fillStyle = COL.textMuted;
+    ctx.font = '11px "IBM Plex Mono"';
+    ctx.fillText(`Boundary: [${bnd.join(', ')}]`, rvX, rvY + 20);
+
+    document.getElementById('cycleStatus').textContent =
+      selectedEdges.size === 0 ? 'Click edges on the graph to select them.' :
+      isCycle ? `${selectedEdges.size} edges selected. Bc = 0 (mod 2) → this is a cycle!` :
+      `${selectedEdges.size} edges selected. Bc ≠ 0 at ${bnd.filter(v=>v!==0).length} vertices → not a cycle.`;
+  }
+
+  c.addEventListener('click', e => {
+    const rect = c.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const region = {x: 0, y: 0, w: w * 0.45, h: h * 0.85};
+    let bestD = Infinity, bestE = -1;
+    for (let ei = 0; ei < g.edges.length; ei++) {
+      const [a, b] = g.edges[ei];
+      const x1 = region.x + g.verts[a][0]*region.w, y1 = region.y + g.verts[a][1]*region.h;
+      const x2 = region.x + g.verts[b][0]*region.w, y2 = region.y + g.verts[b][1]*region.h;
+      const cx = (x1+x2)/2, cy = (y1+y2)/2;
+      const d = Math.hypot(mx-cx, my-cy);
+      if (d < bestD) { bestD = d; bestE = ei; }
+    }
+    if (bestD < 40 && bestE >= 0) {
+      if (selectedEdges.has(bestE)) selectedEdges.delete(bestE); else selectedEdges.add(bestE);
+      draw();
+    }
+  });
+
+  document.getElementById('btnCycleReset').addEventListener('click', () => { selectedEdges.clear(); draw(); });
+  document.getElementById('btnCycleShowTriangle').addEventListener('click', () => {
+    selectedEdges = new Set([0, 1, 2]); // edges A-B, B-C, A-C
+    draw();
+  });
+  document.getElementById('btnCycleShowSquare').addEventListener('click', () => {
+    selectedEdges = new Set([2, 4, 5, 3]); // B-C, C-D, D-E, B-E
+    draw();
+  });
+  document.getElementById('btnCycleShowNon').addEventListener('click', () => {
+    selectedEdges = new Set([0, 2]); // A-B, B-C (a path, not a cycle)
+    draw();
+  });
+
+  draw();
+  window.addEventListener('resize', () => { ({c,ctx,w,h} = setupCanvas('cvCycle')); draw(); });
+})();
+
+// ============================================================
+//  PANEL 5: CHAIN COMPLEX / BOUNDARY
+// ============================================================
+(function(){
+  let {c, ctx, w, h} = setupCanvas('cvBoundary');
+  // 2x2 grid mesh: 4 faces, 12 edges, 9 vertices
+  const L = 2;
+  const verts = [];
+  for (let y = 0; y <= L; y++) for (let x = 0; x <= L; x++) verts.push([x, y]);
+  // verts: 0=(0,0) 1=(1,0) 2=(2,0) 3=(0,1) 4=(1,1) 5=(2,1) 6=(0,2) 7=(1,2) 8=(2,2)
+
+  const edges = [];
+  const edgeMap = {};
+  function ek(a,b) { return a < b ? `${a}-${b}` : `${b}-${a}`; }
+  function addEdge(a,b) {
+    const k = ek(a,b);
+    if (!(k in edgeMap)) { edgeMap[k] = edges.length; edges.push([a,b]); }
+    return edgeMap[k];
+  }
+  // horizontal
+  for (let y = 0; y <= L; y++) for (let x = 0; x < L; x++) addEdge(y*(L+1)+x, y*(L+1)+x+1);
+  // vertical
+  for (let y = 0; y < L; y++) for (let x = 0; x <= L; x++) addEdge(y*(L+1)+x, (y+1)*(L+1)+x);
+
+  // faces: (px,py) -> bottom-left vertex = py*(L+1)+px
+  const faces = [];
+  const faceBoundaryEdges = [];
+  for (let py = 0; py < L; py++) for (let px = 0; px < L; px++) {
+    const bl = py*(L+1)+px;
+    const br = bl+1;
+    const tl = bl+(L+1);
+    const tr = tl+1;
+    faces.push([px, py]);
+    faceBoundaryEdges.push([
+      edgeMap[ek(bl,br)],
+      edgeMap[ek(br,tr)],
+      edgeMap[ek(tl,tr)],
+      edgeMap[ek(bl,tl)]
+    ]);
+  }
+
+  // incidence matrix ∂₁
+  const nV = verts.length, nE = edges.length, nF = faces.length;
+  const d1 = Array.from({length:nV}, ()=>new Array(nE).fill(0));
+  edges.forEach(([a,b], ei) => { d1[a][ei]=1; d1[b][ei]=1; });
+
+  // ∂₂
+  const d2 = Array.from({length:nE}, ()=>new Array(nF).fill(0));
+  faceBoundaryEdges.forEach((bEdges, fi) => { bEdges.forEach(ei => { d2[ei][fi]=1; }); });
+
+  let mode = 'face'; // 'face' or 'edge'
+  let selectedFace = -1;
+  let selectedEdgeSet = new Set();
+
+  function toScreen(vx, vy) {
+    const pad = 40;
+    const size = Math.min(w * 0.38 - pad*2, h - pad*2 - 30);
+    const step = size / L;
+    const ox = pad + 20;
+    const oy = pad + 20;
+    return [ox + vx * step, oy + (L - vy) * step];
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+
+    // determine highlighted edges and boundary
+    let hlEdges = new Set();
+    let bndVals = new Array(nV).fill(0);
+
+    if (mode === 'face' && selectedFace >= 0) {
+      faceBoundaryEdges[selectedFace].forEach(ei => hlEdges.add(ei));
+    } else if (mode === 'edge') {
+      hlEdges = new Set(selectedEdgeSet);
+    }
+    // compute ∂₁ applied to highlighted edges
+    for (const ei of hlEdges) {
+      bndVals[edges[ei][0]] = (bndVals[edges[ei][0]] + 1) % 2;
+      bndVals[edges[ei][1]] = (bndVals[edges[ei][1]] + 1) % 2;
+    }
+    const allZero = hlEdges.size > 0 && bndVals.every(v => v === 0);
+
+    // draw faces
+    for (let fi = 0; fi < faces.length; fi++) {
+      const [px, py] = faces[fi];
+      const [sx, sy] = toScreen(px, py + 1);
+      const [sx2, sy2] = toScreen(px + 1, py);
+      const fw = sx2 - sx, fh = sy2 - sy;
+      ctx.fillStyle = fi === selectedFace ? 'rgba(59,89,152,0.2)' : 'rgba(44,36,23,0.03)';
+      ctx.fillRect(sx, sy, fw, fh);
+      ctx.fillStyle = fi === selectedFace ? COL.blue : COL.textMuted;
+      ctx.font = `500 11px "IBM Plex Mono"`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(`f${fi}`, sx + fw/2, sy + fh/2);
+    }
+
+    // draw edges
+    for (let ei = 0; ei < edges.length; ei++) {
+      const [a, b] = edges[ei];
+      const [x1,y1] = toScreen(verts[a][0], verts[a][1]);
+      const [x2,y2] = toScreen(verts[b][0], verts[b][1]);
+      const sel = hlEdges.has(ei);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle = sel ? COL.accent : 'rgba(44,36,23,0.2)';
+      ctx.lineWidth = sel ? 3 : 1;
+      ctx.stroke();
+    }
+
+    // vertices with boundary values
+    for (let vi = 0; vi < verts.length; vi++) {
+      const [sx,sy] = toScreen(verts[vi][0], verts[vi][1]);
+      const bv = bndVals[vi];
+      const show = hlEdges.size > 0;
+      ctx.beginPath(); ctx.arc(sx, sy, show ? 12 : 5, 0, Math.PI*2);
+      if (show) {
+        ctx.fillStyle = bv === 0 ? COL.greenDim : COL.accentDim;
+        ctx.fill();
+        ctx.strokeStyle = bv === 0 ? COL.green : COL.accent;
+        ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = bv === 0 ? COL.green : COL.accent;
+        ctx.font = '600 10px "IBM Plex Mono"';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(bv), sx, sy);
+      } else {
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.strokeStyle = COL.text; ctx.lineWidth = 1; ctx.stroke();
+      }
+    }
+
+    // matrices on the right
+    const matX = w * 0.44;
+    const matW = w * 0.56;
+
+    // ∂₂ matrix (small)
+    const d2Region = {x: matX, y: 10, w: matW * 0.45, h: h * 0.6};
+    const eLabels = edges.map((_,i) => `e${i}`);
+    const fLabels = faces.map((_,i) => `f${i}`);
+    const hlCols2 = selectedFace >= 0 && mode === 'face' ? new Set([selectedFace]) : new Set();
+    drawMatrix(ctx, d2, eLabels, fLabels, d2Region, {title: '∂₂ (edge × face)', highlightCols: hlCols2});
+
+    // result annotation
+    const annY = h * 0.68;
+    if (hlEdges.size > 0) {
+      ctx.fillStyle = allZero ? COL.green : COL.accent;
+      ctx.font = '600 12px "IBM Plex Mono"';
+      ctx.textAlign = 'center';
+      const label = mode === 'face'
+        ? `∂₁(∂₂(f${selectedFace})) = 0  →  ∂²=0 ✓`
+        : (allZero ? '∂₁(c) = 0  →  cycle ✓' : '∂₁(c) ≠ 0  →  not a cycle');
+      ctx.fillText(label, matX + matW*0.45/2, annY);
+    }
+
+    // explanation
+    ctx.fillStyle = COL.textMuted;
+    ctx.font = '10px "IBM Plex Mono"';
+    ctx.textAlign = 'left';
+    const lines = mode === 'face'
+      ? ['Click a face. ∂₂ gives its boundary', 'edges. Then ∂₁ gives vertex boundary', '= 0 because face boundaries are cycles.']
+      : ['Click edges on the grid. ∂₁ gives', 'the vertex boundary. All zeros = cycle.'];
+    lines.forEach((line, i) => ctx.fillText(line, matX + 4, annY + 22 + i * 14));
+
+    document.getElementById('bndStatus').textContent =
+      mode === 'face'
+        ? (selectedFace >= 0 ? `Face f${selectedFace} selected. Its 4 boundary edges are highlighted. ∂₁ applied → all zeros. ∂²=0.` : 'Click a face to see its boundary.')
+        : (hlEdges.size > 0 ? `${hlEdges.size} edges selected. ∂₁ boundary: [${bndVals.join(',')}]. ${allZero ? 'Cycle!' : 'Not a cycle.'}` : 'Click edges on the grid.');
+  }
+
+  c.addEventListener('click', e => {
+    const rect = c.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+    if (mode === 'face') {
+      // check face click
+      for (let fi = 0; fi < faces.length; fi++) {
+        const [px,py] = faces[fi];
+        const [sx,sy] = toScreen(px, py+1);
+        const [sx2,sy2] = toScreen(px+1, py);
+        if (mx >= sx && mx <= sx2 && my >= sy && my <= sy2) {
+          selectedFace = selectedFace === fi ? -1 : fi;
+          draw(); return;
+        }
+      }
+    } else {
+      // check edge click
+      let bestD = Infinity, bestE = -1;
+      for (let ei = 0; ei < edges.length; ei++) {
+        const [a,b] = edges[ei];
+        const [x1,y1] = toScreen(verts[a][0], verts[a][1]);
+        const [x2,y2] = toScreen(verts[b][0], verts[b][1]);
+        const cx = (x1+x2)/2, cy = (y1+y2)/2;
+        const d = Math.hypot(mx-cx, my-cy);
+        if (d < bestD) { bestD = d; bestE = ei; }
+      }
+      if (bestD < 30 && bestE >= 0) {
+        if (selectedEdgeSet.has(bestE)) selectedEdgeSet.delete(bestE); else selectedEdgeSet.add(bestE);
+        draw();
+      }
+    }
+  });
+
+  document.getElementById('btnBndFace').addEventListener('click', function() {
+    mode = 'face'; selectedEdgeSet.clear();
+    document.querySelectorAll('#cvBoundary ~ .controls button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    draw();
+  });
+  document.getElementById('btnBndEdge').addEventListener('click', function() {
+    mode = 'edge'; selectedFace = -1;
+    document.querySelectorAll('#cvBoundary ~ .controls button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    draw();
+  });
+  document.getElementById('btnBndClear').addEventListener('click', () => {
+    selectedFace = -1; selectedEdgeSet.clear(); draw();
+  });
+
+  draw();
+  window.addEventListener('resize', () => { ({c,ctx,w,h} = setupCanvas('cvBoundary')); draw(); });
+})();
+
+// ============================================================
+
+//  SCROLL REVEAL
+// ============================================================
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('section').forEach(s => observer.observe(s));
+
+// ============================================================
+//  KATEX
+// ============================================================
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\(', right: '\\)', display: false},
+  ],
+  throwOnError: false,
+});
+</script>
+</body>
+</html>
